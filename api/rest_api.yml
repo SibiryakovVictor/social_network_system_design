@@ -13,7 +13,7 @@ info:
   version: 1.0.0
 
 paths:
-  /v1/user:
+  /v1/users:
     post:
       summary: Создать нового пользователя
       description: Метод создаёт нового пользователя при регистрации
@@ -49,7 +49,7 @@ paths:
           description: Ошибка валидации запроса
         500:
           description: Ошибка сервера
-  /v1/user/{id}:
+  /v1/users/{id}:
     put:
       summary: Изменить информацию о пользователе
       description: Метод обновляет информацию о пользователе по переданному значению field mask и значениям полей, указанных в field mask. Если поле указано в field mask, но значение не передано, то значение сбрасывается (в дефолтное для типа данных).
@@ -93,6 +93,8 @@ paths:
                       - location
         400:
           description: Ошибка валидации запроса
+        404:
+          description: Изменяемый пользователь не найден
         500:
           description: Ошибка сервера
     get:
@@ -123,7 +125,11 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/User'
                   - description: "Запрошенный пользователь"
-  /v1/user/{id}/sub/{followingID}:
+        404:
+          description: Запрошенный пользователь не найден
+        500:
+          description: Ошибка сервера
+  /v1/users/{id}/sub/{followingID}:
     post:
       summary: Подписаться на пользователя
       description: Метод подписки пользователя {id} на пользователя {followingID}
@@ -174,7 +180,7 @@ paths:
           description: Не найден подписчик или пользователь, на которого происходит подписка
         500:
           description: Ошибка сервера
-  /v1/user/{id}/sub:
+  /v1/users/{id}/sub:
     get:
       summary: Получить подписчиков пользователя
       description: Метод получения подписчиков пользователя
@@ -222,7 +228,9 @@ paths:
                       allOf:
                         - $ref: '#/components/schemas/Subscriber'
                         - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
-  /v1/user/{id}/following:
+        500:
+         description: Ошибка сервера
+  /v1/users/{id}/following:
     get:
       summary: Получить пользователей, на которых подписан пользователь
       description: Метод получения пользователей, на которых подписан пользователь
@@ -270,7 +278,9 @@ paths:
                       allOf:
                         - $ref: '#/components/schemas/Following'
                         - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
-  /v1/post:
+        500:
+          description: Ошибка сервера
+  /v1/posts:
     post:
       summary: Создать новый пост
       description: Метод создаёт новый пост при публикации
@@ -343,7 +353,9 @@ paths:
                       allOf:
                         - $ref: '#/components/schemas/Post'
                         - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
-  /v1/post/{id}:
+        500:
+          description: Ошибка сервера
+  /v1/posts/{id}:
     put:
       summary: Изменить пост
       description: Метод обновляет информацию о посте по переданному значению field mask и значениям полей, указанных в field mask. Если поле указано в field mask, но значение не передано, то значение сбрасывается (в дефолтное для типа данных).
@@ -378,6 +390,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
+        400:
+          description: Ошибка валидации запроса
+        404:
+          description: Не найден редактируемый пост
+        500:
+          description: Ошибка сервера
     get:
       summary: Получить пост
       description: Метод получения поста
@@ -401,7 +419,7 @@ paths:
           description: Пост не найден
         500:
           description: Ошибка сервера
-  /v1/post/{id}/view:
+  /v1/posts/{id}/view:
     put:
       summary: Пометить пост просмотренным для пользователя
       description: Метод фиксирует, что пользователь просмотрел пост
@@ -430,7 +448,7 @@ paths:
           description: Пост не найден
         500:
           description: Ошибка сервера
-  /v1/post/{id}/rating:
+  /v1/posts/{id}/rating:
     put:
       summary: Оценить пост
       description: Метод оценки поста пользователем
@@ -463,7 +481,7 @@ paths:
           description: Пост не найден
         500:
           description: Ошибка сервера
-  /v1/post/{id}/comment:
+  /v1/posts/{id}/comment:
     post:
       summary: Создать комментарий к посту
       description: Метод комментирования поста пользователем
@@ -489,6 +507,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        400:
+          description: Ошибка валидации запроса
+        404:
+          description: Не найден комментируемый пост
+        500:
+          description: Ошибка сервера
     get:
       summary: Получить комментарии к посту
       description: Метод получения комментариев к посту, отсортированных по sentAt (DESC)
@@ -536,7 +560,11 @@ paths:
                       allOf:
                         - $ref: '#/components/schemas/Comment'
                         - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
-  /v1/post/{postID}/comment/{id}:
+        404:
+          description: Не найден пост
+        500:
+          description: Ошибка сервера
+  /v1/posts/{postID}/comment/{id}:
     put:
       summary: Изменить комментарий к посту
       description: Метод обновляет информацию о посте по переданному значению field mask и значениям полей, указанных в field mask. Если поле указано в field mask, но значение не передано, то значение сбрасывается (в дефолтное для типа данных).
@@ -577,6 +605,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
+        404:
+          description: Не найден комментарий
+        500:
+          description: Ошибка сервера
   /v1/feed/{userID}:
     get:
       summary: Получить фрагмент ленты пользователя
@@ -620,7 +652,7 @@ paths:
           description: Пользователь не найден
         500:
           description: Ошибка сервера
-  /v1/location:rank:
+  /v1/locations:rank:
     get:
       summary: Получить ТОП популярных мест для путешествий
       description: Метод получения ТОПа популярных мест для путешествий с указанием количества позиций в топе
@@ -649,7 +681,60 @@ paths:
                       $ref: '#/components/schemas/LocationTopPosition'
         500:
           description: Ошибка сервера
-  /v1/chat/{userID}:
+  /v1/locations:search:
+    get:
+      summary: Найти место по текстовому запросу
+      description: Метод поиска места по текстовому запросу пользователя (часть названия места)
+      tags:
+        - Location
+      parameters:
+        - name: phrase
+          in: query
+          required: true
+          description: "Текстовый запрос от пользователя"
+          schema:
+            type: string
+            example: "США, Нью-Й"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    description: Список, упорядоченный по (countryName, placeName) ASC
+                    items:
+                      $ref: '#/components/schemas/Location'
+        500:
+          description: Ошибка сервера
+  /v1/locations/{id}:
+    get:
+      summary: Получить место по id
+      description: Метод получения места по id
+      tags:
+        - Location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "ID запрошенного места"
+          schema:
+            $ref: '#/components/schemas/LocationID'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        404:
+          description: Запрошенное место по ID не найдено
+        500:
+          description: Ошибка сервера
+  /v1/chats/{userID}:
     get:
       summary: Получить список диалогов пользователя
       description: Метод получения списка диалогов пользователя
@@ -689,7 +774,11 @@ paths:
                     description: Список диалогов, упорядоченный по lastMessageSentAt (DESC)
                     items:
                       $ref: '#/components/schemas/ChatDialogPreview'
-  /v1/chat/{userID}/dialog/{participantID}:
+        404:
+          description: Пользователь не найден
+        500:
+          description: Ошибка сервера
+  /v1/chats/{userID}/dialog/{participantID}:
     get:
       summary: Получить историю диалога с пользователем
       description: Метод получения истории диалога пользователей X и Y в порядке времени отправки сообщения (DESC)
@@ -735,6 +824,10 @@ paths:
                     description: Список сообщений, упорядоченный по sentAt (DESC)
                     items:
                       $ref: '#/components/schemas/ChatDialogMessage'
+        404:
+          description: Диалог не найден
+        500:
+          description: Ошибка сервера
     post:
       summary: Отправить сообщение в диалоге с пользователем
       description: Метод отправки сообщения в диалоге с пользователем
@@ -776,7 +869,7 @@ paths:
           description: История диалога не найдена
         500:
           description: Ошибка сервера
-  /v1/chat/{userID}/dialog/{participantID}:content:
+  /v1/chats/{userID}/dialog/{participantID}:content:
     get:
       summary: Получить приложенные к сообщениям фото в рамках переписки
       description: Метод получения приложенных к сообщенияи фото в рамках переписки
@@ -826,7 +919,7 @@ paths:
           description: История диалога не найдена
         500:
           description: Ошибка сервера
-  /v1/chat/{userID}/dialog/{participantID}:search:
+  /v1/chats/{userID}/dialog/{participantID}:search:
     get:
       summary: Найти сообщения в диалоге с пользователем
       description: Метод поиска сообщений в диалоге с пользователем по тексту
@@ -931,8 +1024,8 @@ components:
           $ref: '#/components/schemas/UserDescription'
         avatar:
           $ref: '#/components/schemas/UserAvatar'
-        location:
-          $ref: '#/components/schemas/Location'
+        locationID:
+          $ref: '#/components/schemas/LocationID'
     Subscriber:
       type: object
       properties:
@@ -955,17 +1048,31 @@ components:
           allOf:
             - $ref: '#/components/schemas/DateTime'
             - description: "Когда была сделана подписка"
+    LocationID:
+      type: string
+      format: uuid
+      example: 608f4f90-e603-488b-8178-f5d461526926
     Location:
       type: object
       properties:
-        countryID:
-          type: number
-          description: Страна, в которой находится место
-          example: 123
-        placeID:
-          type: number
-          description: Место (город, населенный пункт, кемпинг, ...)
-          example: 456
+        id:
+          $ref: '#/components/schemas/LocationID'
+        countryCode:
+          type: string
+          description: Уникальный код страны.
+          example: usa
+        countryName:
+          type: string
+          description: Название страны
+          example: США
+        placeCode:
+          type: string
+          description: Уникальный код места в рамках страны.
+          example: new_york_city
+        placeName:
+          type: string
+          description: Название места
+          example: Нью-Йорк
     PostID:
       type: string
       format: uuid
@@ -1034,8 +1141,8 @@ components:
           type: string
           description: Краткое описание поста (о чём пост)
           example: "Этот пост про место, где я был..."
-        location:
-          $ref: '#/components/schemas/Location'
+        locationID:
+          $ref: '#/components/schemas/LocationID'
         rating:
           $ref: '#/components/schemas/PostRating'
     Post:
@@ -1063,8 +1170,8 @@ components:
         content:
           type: string
           description: Содержимое поста. Может содержать ссылки на изображения в S3-хранилище, если пользователь прикреплял изображения к посту.
-        location:
-          $ref: '#/components/schemas/Location'
+        locationID:
+          $ref: '#/components/schemas/LocationID'
         rating:
           allOf:
             - $ref: '#/components/schemas/PostRating'
