@@ -1,0 +1,1241 @@
+openapi: 3.0.0
+
+tags:
+  - name: User
+  - name: Post
+  - name: Feed
+  - name: Location
+  - name: Chat
+
+info:
+  title: TravelWeb API
+  description: Описание API по взаимодействию с TravelWeb
+  version: 1.0.0
+
+paths:
+  /v1/users:
+    post:
+      summary: Создать нового пользователя
+      description: Метод создаёт нового пользователя при регистрации
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/User'
+                - required:
+                    - login
+                    - name
+                    - password
+                    - location
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - required:
+                      - id
+                      - login
+                      - name
+                      - password
+                      - location
+        400:
+          description: Ошибка валидации запроса
+        500:
+          description: Ошибка сервера
+  /v1/users/{id}:
+    put:
+      summary: Изменить информацию о пользователе
+      description: Метод обновляет информацию о пользователе по переданному значению field mask и значениям полей, указанных в field mask. Если поле указано в field mask, но значение не передано, то значение сбрасывается (в дефолтное для типа данных).
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID изменяемого пользователя
+          schema:
+            $ref: '#/components/schemas/UserID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fieldMask:
+                  type: string
+                  description: field mask с указанием полей в объекте updateProperties, значение которых требуется обновить
+                  example: "description,location"
+                updateProperties:
+                  $ref: '#/components/schemas/User'
+              required:
+                - fieldMask
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - required:
+                      - id
+                      - login
+                      - name
+                      - password
+                      - location
+        400:
+          description: Ошибка валидации запроса
+        404:
+          description: Изменяемый пользователь не найден
+        500:
+          description: Ошибка сервера
+    get:
+      summary: Получить пользователя
+      description: Метод получения пользователя
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID запрошенного пользователя
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: fieldMask
+          in: query
+          required: true
+          description: "field mask запрошенных полей по пользователю. Возвращаются только запрошенные поля, остальные значения остальных полей будут пустыми."
+          schema:
+            type: string
+            example: "name,description,location"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - description: "Запрошенный пользователь"
+        404:
+          description: Запрошенный пользователь не найден
+        500:
+          description: Ошибка сервера
+  /v1/users/{id}/sub/{followingID}:
+    post:
+      summary: Подписаться на пользователя
+      description: Метод подписки пользователя {id} на пользователя {followingID}
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID подписчика
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: followingID
+          in: path
+          required: true
+          description: ID пользователя, на которого происходит подписка
+          schema:
+            $ref: '#/components/schemas/UserID'
+      responses:
+        200:
+          description: OK
+        404:
+          description: Не найден подписчик или пользователь, на которого происходит подписка
+        500:
+          description: Ошибка сервера
+    delete:
+      summary: Отписаться от пользователя
+      description: Метод отписки пользователя {id} от пользователя {followingID}
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID подписчика
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: followingID
+          in: path
+          required: true
+          description: ID пользователя, на которого происходит подписка
+          schema:
+            $ref: '#/components/schemas/UserID'
+      responses:
+        200:
+          description: OK
+        404:
+          description: Не найден подписчик или пользователь, на которого происходит подписка
+        500:
+          description: Ошибка сервера
+  /v1/users/{id}/sub:
+    get:
+      summary: Получить подписчиков пользователя
+      description: Метод получения подписчиков пользователя
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID пользователя, подписчики которого требуются
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва результатов в выборке
+          schema:
+            type: number
+            example: 30
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по результатам выборки
+          schema:
+            type: number
+            example: 30
+        - name: fieldMask
+          in: query
+          required: true
+          description: "field mask запрошенных полей по пользователю. Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+          schema:
+            type: string
+            example: "user.name,user.description,user.location"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subs:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Subscriber'
+                        - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+        500:
+         description: Ошибка сервера
+  /v1/users/{id}/following:
+    get:
+      summary: Получить пользователей, на которых подписан пользователь
+      description: Метод получения пользователей, на которых подписан пользователь
+      tags:
+        - User
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID пользователя
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва результатов в выборке
+          schema:
+            type: number
+            example: 30
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по результатам выборки
+          schema:
+            type: number
+            example: 30
+        - name: fieldMask
+          in: query
+          required: true
+          description: "field mask запрошенных полей по пользователю. Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+          schema:
+            type: string
+            example: "user.name,user.description,user.location"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  followings:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Following'
+                        - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+        500:
+          description: Ошибка сервера
+  /v1/posts:
+    post:
+      summary: Создать новый пост
+      description: Метод создаёт новый пост при публикации
+      tags:
+        - Post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        400:
+          description: Ошибка валидации запроса
+        500:
+          description: Ошибка сервера
+    get:
+      summary: Получить посты
+      description: Метод получения постов по фильтрам
+      tags:
+        - Post
+      parameters:
+        - name: filter
+          in: query
+          required: true
+          description: Фильтр получения постов
+          schema:
+            type: object
+            properties:
+              location:
+                $ref: '#/components/schemas/Location'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва результатов в выборке
+          schema:
+            type: number
+            example: 10
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по результатам выборки
+          schema:
+            type: number
+            example: 10
+        - name: fieldMask
+          in: query
+          required: true
+          description: "field mask запрошенных полей по комментарию. Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+          schema:
+            type: string
+            example: "title,description"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Post'
+                        - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+        500:
+          description: Ошибка сервера
+  /v1/posts/{id}:
+    put:
+      summary: Изменить пост
+      description: Метод обновляет информацию о посте по переданному значению field mask и значениям полей, указанных в field mask. Если поле указано в field mask, но значение не передано, то значение сбрасывается (в дефолтное для типа данных).
+      tags:
+        - Post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID редактируемого поста
+          schema:
+            $ref: '#/components/schemas/PostID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fieldMask:
+                  type: string
+                  description: field mask с указанием полей в объекте updateProperties, значение которых требуется обновить
+                  example: "title, description,location"
+                updateProperties:
+                  $ref: '#/components/schemas/Post'
+              required:
+                - fieldMask
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        400:
+          description: Ошибка валидации запроса
+        404:
+          description: Не найден редактируемый пост
+        500:
+          description: Ошибка сервера
+    get:
+      summary: Получить пост
+      description: Метод получения поста
+      tags:
+        - Post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID запрашиваемого поста
+          schema:
+            $ref: '#/components/schemas/PostID'
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        404:
+          description: Пост не найден
+        500:
+          description: Ошибка сервера
+  /v1/posts/{id}/view:
+    put:
+      summary: Пометить пост просмотренным для пользователя
+      description: Метод фиксирует, что пользователь просмотрел пост
+      tags:
+        - Post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID просматриваемого поста
+          schema:
+            $ref: '#/components/schemas/PostID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userID:
+                  $ref: '#/components/schemas/UserID'
+      responses:
+        200:
+          description: OK
+        404:
+          description: Пост не найден
+        500:
+          description: Ошибка сервера
+  /v1/posts/{id}/rating:
+    put:
+      summary: Оценить пост
+      description: Метод оценки поста пользователем
+      tags:
+        - Post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID оцениваемого поста
+          schema:
+            type : string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userID:
+                  $ref: '#/components/schemas/UserID'
+                like:
+                  type: boolean
+                  description: Понравился пользователю пост или не понравился
+                  example: true
+      responses:
+        200:
+          description: OK
+        404:
+          description: Пост не найден
+        500:
+          description: Ошибка сервера
+  /v1/posts/{id}/comment:
+    post:
+      summary: Создать комментарий к посту
+      description: Метод комментирования поста пользователем
+      tags:
+        - Post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID комментируемого поста
+          schema:
+            $ref: '#/components/schemas/PostID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        400:
+          description: Ошибка валидации запроса
+        404:
+          description: Не найден комментируемый пост
+        500:
+          description: Ошибка сервера
+    get:
+      summary: Получить комментарии к посту
+      description: Метод получения комментариев к посту, отсортированных по sentAt (DESC)
+      tags:
+        - Post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID поста, комментарии которого требуются
+          schema:
+            $ref: '#/components/schemas/PostID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва результатов в выборке
+          schema:
+            type: number
+            example: 30
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по результатам выборки
+          schema:
+            type: number
+            example: 30
+        - name: fieldMask
+          in: query
+          required: true
+          description: "field mask запрошенных полей по комментарию. Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+          schema:
+            type: string
+            example: "content"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Comment'
+                        - description: "Возвращаются только запрошенные поля, значения остальных полей будут пустыми."
+        404:
+          description: Не найден пост
+        500:
+          description: Ошибка сервера
+  /v1/posts/{postID}/comment/{id}:
+    put:
+      summary: Изменить комментарий к посту
+      description: Метод обновляет информацию о посте по переданному значению field mask и значениям полей, указанных в field mask. Если поле указано в field mask, но значение не передано, то значение сбрасывается (в дефолтное для типа данных).
+      tags:
+        - Post
+      parameters:
+        - name: postID
+          in: path
+          required: true
+          description: ID комментируемого поста
+          schema:
+            $ref: '#/components/schemas/PostID'
+        - name: id
+          in: path
+          required: true
+          description: ID редактируемого комментария
+          schema:
+            $ref: '#/components/schemas/CommentID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fieldMask:
+                  type: string
+                  description: field mask с указанием полей в объекте updateProperties, значение которых требуется обновить
+                  example: "content"
+                updateProperties:
+                  $ref: '#/components/schemas/Comment'
+              required:
+                - fieldMask
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        404:
+          description: Не найден комментарий
+        500:
+          description: Ошибка сервера
+  /v1/feed/{userID}:
+    get:
+      summary: Получить фрагмент ленты пользователя
+      description: Метод получения фрагмента ленты пользователя, состоящий из превью постов, опубликованных этим пользователем
+      tags:
+        - Feed
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя, фрагмент ленты которого требуется получить
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва превью постов в ленте
+          schema:
+            type: number
+            example: 10
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по кол-ву постов в ленте
+          schema:
+            type: number
+            example: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PostPreview'
+        404:
+          description: Пользователь не найден
+        500:
+          description: Ошибка сервера
+  /v1/locations:rank:
+    get:
+      summary: Получить ТОП популярных мест для путешествий
+      description: Метод получения ТОПа популярных мест для путешествий с указанием количества позиций в топе
+      tags:
+        - Location
+      parameters:
+        - name: top
+          in: query
+          required: true
+          description: "Количество позиций в топе. Возможные значения: 3, 5, 10, 30"
+          schema:
+            type: number
+            example: 3
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    description: Список, упорядоченный по postCount (DESC)
+                    items:
+                      $ref: '#/components/schemas/LocationTopPosition'
+        500:
+          description: Ошибка сервера
+  /v1/locations:search:
+    get:
+      summary: Найти место по текстовому запросу
+      description: Метод поиска места по текстовому запросу пользователя (часть названия места)
+      tags:
+        - Location
+      parameters:
+        - name: phrase
+          in: query
+          required: true
+          description: "Текстовый запрос от пользователя"
+          schema:
+            type: string
+            example: "США, Нью-Й"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    description: Список, упорядоченный по (countryName, placeName) ASC
+                    items:
+                      $ref: '#/components/schemas/Location'
+        500:
+          description: Ошибка сервера
+  /v1/locations/{id}:
+    get:
+      summary: Получить место по id
+      description: Метод получения места по id
+      tags:
+        - Location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "ID запрошенного места"
+          schema:
+            $ref: '#/components/schemas/LocationID'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        404:
+          description: Запрошенное место по ID не найдено
+        500:
+          description: Ошибка сервера
+  /v1/chats/{userID}:
+    get:
+      summary: Получить список диалогов пользователя
+      description: Метод получения списка диалогов пользователя
+      tags:
+        - Chat
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя, диалоги которого требуется получить
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва диалогов в запросе
+          schema:
+            type: number
+            example: 10
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по кол-ву диалогов в выборке
+          schema:
+            type: number
+            example: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dialogs:
+                    type: array
+                    description: Список диалогов, упорядоченный по lastMessageSentAt (DESC)
+                    items:
+                      $ref: '#/components/schemas/ChatDialogPreview'
+        404:
+          description: Пользователь не найден
+        500:
+          description: Ошибка сервера
+  /v1/chats/{userID}/dialog/{participantID}:
+    get:
+      summary: Получить историю диалога с пользователем
+      description: Метод получения истории диалога пользователей X и Y в порядке времени отправки сообщения (DESC)
+      tags:
+        - Chat
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя, который просматривает диалог
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: participantID
+          in: path
+          required: true
+          description: ID пользователя, который участвовал в диалоге
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва сообщений в выборке
+          schema:
+            type: number
+            example: 10
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по кол-ву сообщений в выборке
+          schema:
+            type: number
+            example: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dialogs:
+                    type: array
+                    description: Список сообщений, упорядоченный по sentAt (DESC)
+                    items:
+                      $ref: '#/components/schemas/ChatDialogMessage'
+        404:
+          description: Диалог не найден
+        500:
+          description: Ошибка сервера
+    post:
+      summary: Отправить сообщение в диалоге с пользователем
+      description: Метод отправки сообщения в диалоге с пользователем
+      tags:
+        - Chat
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя, который отправляет сообщение
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: participantID
+          in: path
+          required: true
+          description: ID пользователя, который участвовал в диалоге
+          schema:
+            $ref: '#/components/schemas/UserID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ChatDialogMessage'
+                - required:
+                    - sentAt
+                    - text
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ChatDialogMessage'
+                  - description: "Отправленное сообщение"
+        404:
+          description: История диалога не найдена
+        500:
+          description: Ошибка сервера
+  /v1/chats/{userID}/dialog/{participantID}:content:
+    get:
+      summary: Получить приложенные к сообщениям фото в рамках переписки
+      description: Метод получения приложенных к сообщенияи фото в рамках переписки
+      tags:
+        - Chat
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя, который просматривает диалог
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: participantID
+          in: path
+          required: true
+          description: ID пользователя, который участвовал в диалоге
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва фото в выборке
+          schema:
+            type: number
+            example: 10
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по кол-ву фото в выборке
+          schema:
+            type: number
+            example: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  photos:
+                    type: array
+                    description: "Список фото, отсортированный по sentAt (DESC)"
+                    items:
+                      $ref: '#/components/schemas/ChatMessagePhoto'
+        404:
+          description: История диалога не найдена
+        500:
+          description: Ошибка сервера
+  /v1/chats/{userID}/dialog/{participantID}:search:
+    get:
+      summary: Найти сообщения в диалоге с пользователем
+      description: Метод поиска сообщений в диалоге с пользователем по тексту
+      tags:
+        - Chat
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя, который просматривает диалог
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: participantID
+          in: path
+          required: true
+          description: ID пользователя, который участвовал в диалоге
+          schema:
+            $ref: '#/components/schemas/UserID'
+        - name: phrase
+          in: query
+          required: true
+          description: Фраза для поиска
+          schema:
+            type: string
+            example: ехал
+        - name: limit
+          in: query
+          required: true
+          description: Лимит кол-ва фото в выборке
+          schema:
+            type: number
+            example: 10
+        - name: offset
+          in: query
+          required: true
+          description: Смещение по кол-ву фото в выборке
+          schema:
+            type: number
+            example: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    description: "Найденные по фразе сообщения"
+                    items:
+                      $ref: '#/components/schemas/ChatDialogMessage'
+        404:
+          description: История диалога не найдена
+        500:
+          description: Ошибка сервера
+components:
+  schemas:
+    DateTime:
+      type: string
+      format: date-time
+      example: 2024-06-04T17:32:28Z
+    UserLogin:
+      type: string
+      example: "some.login123456"
+    UserName:
+      type: string
+      example: "Arthur Morgan"
+    UserPassword:
+      type: string
+      example: "super_secret@#$!212"
+    UserDescription:
+      type: string
+      example: "blablabla"
+    UserAvatar:
+      type: object
+      properties:
+        link:
+          type: string
+          format: url
+          example: https://amazon.s3.com/dcasdc
+    UserID:
+      type: string
+      format: uuid
+      example: 608f4f90-e603-488b-8178-f5d461526926
+    User:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/UserID'
+            - readOnly: true
+        login:
+          $ref: '#/components/schemas/UserLogin'
+        password:
+          allOf:
+            - $ref: '#/components/schemas/UserPassword'
+            - writeOnly: true
+        name:
+          $ref: '#/components/schemas/UserName'
+        description:
+          $ref: '#/components/schemas/UserDescription'
+        avatar:
+          $ref: '#/components/schemas/UserAvatar'
+        locationID:
+          $ref: '#/components/schemas/LocationID'
+    Subscriber:
+      type: object
+      properties:
+        user:
+          allOf:
+            - $ref: '#/components/schemas/User'
+            - description: "Информация о пользователе"
+        subscribedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+            - description: "Когда была сделана подписка"
+    Following:
+      type: object
+      properties:
+        user:
+          allOf:
+            - $ref: '#/components/schemas/User'
+            - description: "Информация о пользователе, на которого подписались"
+        subscribedAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+            - description: "Когда была сделана подписка"
+    LocationID:
+      type: string
+      format: uuid
+      example: 608f4f90-e603-488b-8178-f5d461526926
+    Location:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/LocationID'
+        countryCode:
+          type: string
+          description: Уникальный код страны.
+          example: usa
+        countryName:
+          type: string
+          description: Название страны
+          example: США
+        placeCode:
+          type: string
+          description: Уникальный код места в рамках страны.
+          example: new_york_city
+        placeName:
+          type: string
+          description: Название места
+          example: Нью-Йорк
+    PostID:
+      type: string
+      format: uuid
+      example: 989d5dff-cf9e-49b3-9eaa-3f1bd86b8a0e
+    CommentID:
+      type: string
+      format: uuid
+      example: 2161ad28-963f-4f07-885a-e8060ec8da5c
+    Comment:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/CommentID'
+            - readOnly: true
+        postID:
+          $ref: '#/components/schemas/PostID'
+        userID:
+          $ref: '#/components/schemas/UserID'
+        responseTo:
+          $ref: '#/components/schemas/CommentID'
+        content:
+          type: string
+          example: "Мне понравился пост, потому что ..."
+    PostCover:
+      type: object
+      description: Обложка поста для превью
+      properties:
+        link:
+          type: string
+          format: url
+          example: https://amazon.s3.com/dcasdc
+    PostRating:
+      type: object
+      description: Рейтинг/оценки поста
+      properties:
+        viewsCount:
+          type: number
+          description: Количество просмотров
+          example: 111
+        thumbUpCount:
+          type: number
+          description: Количество лайков ("пальцев вверх")
+          example: 123
+        thumbDownCount:
+          type: number
+          description: Количество дизлайков ("пальцев вниз")
+          example: 123
+    PostPreview:
+      type: object
+      description: Превью поста
+      properties:
+        id:
+          $ref: '#/components/schemas/PostID'
+        authorID:
+          $ref: '#/components/schemas/UserID'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        title:
+          type: string
+          description: Заголовок поста
+          example: "Путешествие в ..."
+        cover:
+          $ref: '#/components/schemas/PostCover'
+        description:
+          type: string
+          description: Краткое описание поста (о чём пост)
+          example: "Этот пост про место, где я был..."
+        locationID:
+          $ref: '#/components/schemas/LocationID'
+        rating:
+          $ref: '#/components/schemas/PostRating'
+    Post:
+      type: object
+      description: Пост (целиком)
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/PostID'
+            - readOnly: true
+        authorID:
+          $ref: '#/components/schemas/UserID'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        title:
+          type: string
+          description: Заголовок поста
+          example: "Путешествие в ..."
+        cover:
+          $ref: '#/components/schemas/PostCover'
+        description:
+          type: string
+          description: Краткое описание поста (о чём пост)
+          example: "Этот пост про место, где я был..."
+        content:
+          type: string
+          description: Содержимое поста. Может содержать ссылки на изображения в S3-хранилище, если пользователь прикреплял изображения к посту.
+        locationID:
+          $ref: '#/components/schemas/LocationID'
+        rating:
+          allOf:
+            - $ref: '#/components/schemas/PostRating'
+            - readOnly: true
+    LocationTopPosition:
+      type: object
+      description: Позиция локации в ТОПе популярных мест
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+        postCount:
+          type: number
+          description: Количество постов об этой локации
+          example: 10001
+    ChatDialogPreview:
+      type: object
+      description: Превью диалога в списке диалогов пользователя
+      properties:
+        participantID:
+          allOf:
+            - $ref: '#/components/schemas/UserID'
+            - description: "ID собеседника"
+        lastMessageText:
+          type: string
+          description: Текст последнего сообщения в диалоге
+          example: "Забыл вчера сказать, что..."
+        lastMessageSentAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+            - description: "Когда было отправлено последнее сообщение в диалоге"
+    ChatMessageID:
+      type: string
+      format: uuid
+      example: 5faaedae-c47f-49a4-b5a8-074982258ecc
+    ChatMessagePhoto:
+      type: object
+      description: Приложенное к сообщению фото
+      properties:
+        link:
+          type: string
+          format: url
+          example: https://amazon.s3.com/dcasdc
+        sentAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+            - description: "Когда было отправлено фото"
+      required:
+        - link
+    ChatDialogMessage:
+      type: object
+      description: Сообщение в диалоге пользователей
+      properties:
+        messageID:
+          allOf:
+            - $ref: '#/components/schemas/ChatMessageID'
+            - description: "ID сообщения"
+            - readOnly: true
+        sentAt:
+          allOf:
+            - $ref: '#/components/schemas/DateTime'
+            - description: "Когда было отправлено сообщение"
+        text:
+          type: string
+          description: "Текст сообщения"
+          example: "Забыл вчера сказать, что..."
+        photo:
+          $ref: '#/components/schemas/ChatMessagePhoto'
